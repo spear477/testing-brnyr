@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">
+    <style>
+        #products{
+
+            column-count: 3;
+            column-gap: 1.25rem;
+            orphans: 1;
+            widows: 1;
+            margin-top: 30px;
+        }
+        .product{
+            border: none;
+
+        }
+        .product:hover  img{
+            transform: scale(1.05) rotate(-10deg);
+        }
+        /*.product img{*/
+        /*    width: 150px;*/
+        /*    height: auto;*/
+        /*    margin-bottom: -50px;*/
+        /*    margin-left: 1rem;*/
+        /*    z-index: 1000;*/
+        /*    transition: 0.5s;*/
+        /*}*/
+        .product img{
+            height: 180px;
+            width: auto;
+            margin-bottom: -50px;
+            margin-left: 1rem;
+            transition: 0.5s;
+            z-index: 100;
+        }
+        .product .card-title{
+            margin-top: 50px !important;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-right: -5px;
+            margin-left: -5px;
+        }
+        .img-in-cart{
+            height: 50px;
+            width: auto;
+        }
+    </style>
+</head>
+<body>
+  <div class="container-fluid">
+      <div class="row justify-content-center">
+          <div class="col-10">
+              <div class="">
+                  <div class="row">
+                      <div class="col-8 border-end min-vh-100">
+                          <div class="d-flex justify-content-between align-items-end">
+                              <div class="">
+                                  <h4 class="">My shop</h4>
+                                  <small>Bootstrap & jQuery</small>
+                              </div>
+                              <div class="">
+                                  <div class="row">
+                                      <div class="col">
+                                          <input type="text" id="search" class="form-control" placeholder="Select Category">
+                                      </div>
+                                      <div class="col">
+                                          <select name="" id="category" class="form-select">
+                                              <option value="0">All Category</option>
+                                          </select>
+                                      </div>
+
+                                  </div>
+                              </div>
+                          </div>
+                          <div class="container">
+                              <div class="row"  id="products">
+
+                              </div>
+                          </div>
+                      </div>
+                      <div class="col-4">
+                          <div class="d-flex justify-content-between align-items-end">
+                              <div class="">
+                                  <h4 class="">My Cart</h4>
+                                  <small>Added Items</small>
+                              </div>
+                              <div class="">
+                                    <h4 class="">
+                                        <span class="">0</span>
+                                        <i class="fa-solid fa-cart-shopping"></i>
+                                    </h4>
+                              </div>
+                          </div>
+                          <div class="" id="cart">
+
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <script src="node_modules/jquery/dist/jquery.js"></script>
+
+  <script>
+
+      let products =[];
+
+
+      function toShort(str,max=50){
+         if(str.length > max){
+             return str.substring(0,max)+"....."
+         }
+
+         return str;
+      };
+
+      function toShow(x){
+          $("#products").empty();
+          x.map(product=>{
+              $("#products").append(`
+                 <div class="col-3">
+                       <div class=" card product pt-5">
+                       <img src="${product.image}" alt="" class="card-img-top">
+                      <div class="card-body border rounded">
+                                      <p class="card-title text-nowrap text-primary overflow-hidden">
+                                         ${product.title}
+                                     </p>
+                                      <small class="text-black-50">${toShort(product.description,80)}</small>
+                                        <div class="d-flex justify-content-between align-items-end  mb-3">
+                                            <span class="">
+                                               <i class="fa-solid fa-dollar-sign"></i>${product.price}
+                                            </span>
+                                            <button class="btn btn-sm btn-outline-primary add-to-cart" data-id="${product.id}">
+                                                 Add<i class="fa-solid fa-cart-plus"></i>
+                                            </button>
+                                        </div>
+                                  </div>
+                </div>
+                 </div>
+
+                `);
+          });
+      }
+
+      $.get("https://fakestoreapi.com/products",function (data){
+          products = data;
+          toShow(products);
+
+
+      });
+
+      $("#search").on("keyup",function (){
+
+          let keyword = $(this).val().toLowerCase();
+          // $(".product").filter(function (){
+          //    $(this).toggle($(this).text().toLowerCase().indexOf(keyword));
+          // }
+
+          if(keyword.trim().length){
+
+              let filterProduct = products.filter(product =>{
+                  if(product.title.toLowerCase().indexOf(keyword) > -1 || product.description.toLowerCase().indexOf(keyword) > -1 || product.price === keyword){
+                      return product;
+                  }
+              });
+              toShow(filterProduct);
+          }
+
+      });
+      $.get("https://fakestoreapi.com/products/categories",function (data){
+          data.map( cat => $("#category").append(`<option value="${cat}">${cat}</option>`));
+      });
+      $("#category").on("change",function (){
+         let selectedCategory = $(this).val();
+         if (selectedCategory != 0){
+             let filterProduct = products.filter(product =>{
+                 if(product.category === selectedCategory){
+                     return product;
+                 }
+             });
+             toShow(filterProduct);
+         }else{
+             toShow(products);
+         }
+      });
+
+      $("#products").delegate(".add-to-cart","click",function (){
+         let currentItemId = $(this).attr("data-id");
+           console.log(currentItemId);
+         let productInfo = products.filter(el=>el.id == currentItemId)[0];
+         console.log(productInfo);
+         $("#cart").append(`
+                           <div class="card border-0 item-in-cart" data-id="${productInfo.id}">
+                                  <div class="card-body">
+                                      <div class="d-flex justify-content-between">
+                                          <img src="${productInfo.image}" class="img-in-cart" alt="">
+                                          <button class="btn btn-outline-danger">
+                                              <i class="fa-solid fa-trash-can"></i>
+                                          </button>
+
+                                      </div>
+                                       <p>${productInfo.title}</p>
+
+                                      <div class="d-flex justify-content-between align-items-end">
+                                          <div class="form-row">
+                                              <button class="btn  btn-outline-primary quantity-plus">
+<!--                                                  <i class="fa-solid fa-plus"></i>-->
+                                                  <i class="fas fa-plus "></i>
+                                              </button>
+                                              <input type="text" class="form-control mx-1 quantity" unitPrice="${productInfo.price}" style="width: 65px;" value="1" min="1">
+                                              <button class="btn  btn-outline-primary quantity-minus">
+<!--                                                  <i class="fa-solid fa-minus"></i>-->
+                                                  <i class="fas fa-minus"></i>
+                                              </button>
+                                          </div>
+                                          <p>$ <span class="">123</span></p>
+                                      </div>
+                                  </div>
+                              </div>
+
+         `);
+      });
+  </script>
+
+</body>
+</html>
